@@ -1,30 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_app/presentation/providers/providers.dart';
 
-
-class TodoScreen extends StatelessWidget {
+class TodoScreen extends ConsumerWidget {
   const TodoScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('State Provider + Providers'),
       ),
       body: const _TodoView(),
       floatingActionButton: FloatingActionButton(
-        child: const Icon( Icons.add ),
-        onPressed: () {},
+        child: const Icon(Icons.add),
+        onPressed: () {
+          ref.read(todosProvider.notifier).update((state) => [
+                ...state,
+              ]);
+        },
       ),
     );
   }
 }
 
-
-class _TodoView extends StatelessWidget {
+class _TodoView extends ConsumerWidget {
   const _TodoView();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentFilter = ref.watch(todoFilterProvider);
+    final todos = ref.watch(filteredTodosProvider);
     return Column(
       children: [
         const ListTile(
@@ -33,27 +39,29 @@ class _TodoView extends StatelessWidget {
         ),
 
         SegmentedButton(
-          segments: const[
-            ButtonSegment(value: 'all', icon: Text('Todos')),
-            ButtonSegment(value: 'completed', icon: Text('Invitados')),
-            ButtonSegment(value: 'pending', icon: Text('No invitados')),
-          ], 
-          selected: const <String>{ 'all' },
+          segments: const [
+            ButtonSegment(value: TodoFilter.all, icon: Text('Todos')),
+            ButtonSegment(value: TodoFilter.completed, icon: Text('Invitados')),
+            ButtonSegment(value: TodoFilter.peding, icon: Text('No invitados')),
+          ],
+          selected: <TodoFilter>{currentFilter},
           onSelectionChanged: (value) {
-            
+            ref
+                .read(todoFilterProvider.notifier)
+                .update((state) => value.first);
           },
         ),
-        const SizedBox( height: 5 ),
+        const SizedBox(height: 5),
 
         /// Listado de personas a invitar
         Expanded(
           child: ListView.builder(
+            itemCount: todos.length,
             itemBuilder: (context, index) {
               return SwitchListTile(
-                title: const Text('Juan carlos'),
-                value: true, 
-                onChanged: ( value ) {}
-              );
+                  title: Text(todos[index].description),
+                  value: todos[index].done,
+                  onChanged: (value) {});
             },
           ),
         )
